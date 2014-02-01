@@ -320,6 +320,7 @@ module.exports = {
 	init: function(logger_, config) {
 		logger = logger_;
 		incoming = config.incoming || ".";
+		downloads = [];
 
 		// Load and restart saved downloads
 		HTTPDownload.find({}, function(err, items) {
