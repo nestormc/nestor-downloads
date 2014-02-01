@@ -15,15 +15,15 @@ define(["when", "rest"], function(when, rest) {
 			},
 
 			pause: function(id) {
-				return rest.patch("downloads/" + id, { action: "pause" });
+				return rest.patch("downloads/" + id.replace(/:/g, "/"), { action: "pause" });
 			},
 
 			resume: function(id) {
-				return rest.patch("downloads/" + id, { action: "resume" });
+				return rest.patch("downloads/" + id.replace(/:/g, "/"), { action: "resume" });
 			},
 
 			cancel: function(id) {
-				return rest.del("downloads/" + id);
+				return rest.del("downloads/" + id.replace(/:/g, "/"));
 			}
 		},
 
