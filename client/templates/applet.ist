@@ -1,0 +1,27 @@
+#stats
+	@if typeof active !== "undefined"
+		.active
+			@if active == 1
+				"1 active download"
+			@else
+				"{{ (active || 'No') }} active downloads"
+
+		.speed
+			.upload
+				@if uploadRate > 0
+					span.icon.active
+						@svg "images/upload.svg"
+					"{{ humanSize(uploadRate, 'B/s') }}"
+				@else
+					span.icon
+						@svg "images/upload.svg"
+					"0 B/s"
+			.download
+				@if downloadRate > 0
+					span.icon.active
+						@svg "images/download.svg"
+					"{{ humanSize(downloadRate, 'B/s') }}"
+				@else
+					span.icon
+						@svg "images/download.svg"
+					"0 B/s"
