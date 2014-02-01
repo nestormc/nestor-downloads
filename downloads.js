@@ -146,38 +146,42 @@ function putDownload(req, isPatch, cb) {
 }
 
 
-/**
- * Public interface
+/*!
+ * Plugin interface
  */
 
 
-exports.init = function(nestor) {
-	var intents = nestor.intents;
+function downloadsPlugin(nestor) {
+	var logger = nestor.logger;
+	var rest = nestor.rest;
+	var mongoose = nestor.mongoose;
+	var config = nestor.config;
 
-	intents.on("nestor:rest", function(rest) {
-		var downloadsResource = rest.resource("downloads")
-			.count(countDownloads)
-			.list(listDownloads)
-			.post(postDownload);
+	var downloadsResource = rest.resource("downloads")
+		.count(countDownloads)
+		.list(listDownloads)
+		.post(postDownload);
 
-		downloadsResource.sub("stats")
-			.get(getStats);
+	downloadsResource.sub("stats")
+		.get(getStats);
 
-		downloadsResource.sub(":provider/:id")
-			.hook(downloadHook)
-			.get(getDownload)
-			.del(deleteDownload)
-			.put(putDownload);
-	});
+	downloadsResource.sub(":provider/:id")
+		.hook(downloadHook)
+		.get(getDownload)
+		.del(deleteDownload)
+		.put(putDownload);
 
 	Object.keys(providers).forEach(function(name) {
-		providers[name].init(nestor.logger, nestor.config.downloads);
+		providers[name].init(mongoose, logger, config);
 	});
-};
+}
 
 
-exports.manifest = {
+downloadsPlugin.manifest = {
 	name: "downloads",
 	description: "Downloads",
 	clientDir: __dirname + "/client"
 };
+
+
+module.exports = downloadsPlugin;

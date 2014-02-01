@@ -121,7 +121,7 @@ TorrentDownload.prototype = {
 
 
 module.exports = {
-	init: function(logger, config) {
+	init: function(mongoose, logger, config) {
 		/*incoming = config.incoming || ".";
 
 		client = new Client({

@@ -1,8 +1,8 @@
 {
   "name": "nestor-downloads",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Nestor downloads plugin",
-  "main": "index.js",
+  "main": "downloads.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:nestormc/nestor-downloads.git"
@@ -10,8 +10,6 @@
   "author": "Nicolas Joyard <joyard.nicolas@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "mongoose": "*",
-    "nestor-plugin-registry": "*",
     "node-torrent": "*",
     "when": "*"
   }
