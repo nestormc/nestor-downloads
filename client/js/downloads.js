@@ -10,21 +10,7 @@ define([
 	"ist!templates/applet"
 ], function(ui, router, dom, when, resources, downloadlistTemplate, appletTemplate) {
 	"use strict";
-
-	// TODO un-global this
-	window.humanSize = function(size, suffix) {
-		var suffixes = ["", "k", "M", "G", "T"];
-		size = Math.floor(size);
-
-		while (size > 1024) {
-			size = size / 1024;
-			suffixes.shift();
-		}
-
-		return (Math.floor(size * 10) / 10) + " " + suffixes[0] + suffix;
-	};
-
-
+	
 
 	/*!
 	 * Applet updater
