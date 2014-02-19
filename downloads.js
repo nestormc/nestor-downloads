@@ -180,7 +180,12 @@ function downloadsPlugin(nestor) {
 downloadsPlugin.manifest = {
 	name: "downloads",
 	description: "Downloads",
-	clientDir: __dirname + "/client"
+	client: {
+		public: __dirname + "/client/public",
+		build: {
+			base: __dirname + "/client"
+		}
+	}
 };
 
 

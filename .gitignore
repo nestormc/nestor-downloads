@@ -1,4 +1,2 @@
 node_modules
-client/style/*.css
-client/js/index-built.js
-client/js/index-built.js.map
+client/public/style/*.css
