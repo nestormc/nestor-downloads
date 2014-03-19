@@ -17,6 +17,14 @@ var when = require("when"),
 var RATE_INTERVAL = 1000;
 
 
+var errors = {
+	"getaddrinfo ENOTFOUND": "Unknown host name",
+	"connect ECONNREFUSED": "Connection refused",
+	"DEPTH_ZERO_SELF_SIGNED_CERT": "Rejected certificate, retry to force download",
+	"HTTP error 404": "File not found"
+};
+
+
 
 module.exports = {
 	init: function(mongoose, logger, config) {
@@ -56,7 +64,8 @@ module.exports = {
 			this.uploaded = 0;
 			this.uploadRate = 0;
 			this.leechers = 0;
-			this.error = undefined;
+			this._errormsg = "";
+			this._insecureSSL = null;
 
 			this._flushing = false;
 			this._rateStartTime = 0;
@@ -73,9 +82,14 @@ module.exports = {
 
 		HTTPDownloadSchema.methods._setState = function(state, msg) {
 			this._state = state;
-			this.error = state === "error" ? msg : undefined;
+			this._errormsg = state === "error" ? msg : undefined;
 
 			if (state === "error") {
+				if (msg === "DEPTH_ZERO_SELF_SIGNED_CERT") {
+					// Self signed cert, mark it as such
+					this._insecureSSL = false;
+				}
+
 				logger.error("Error downloading %s: %s", this.uri, msg);
 
 				if (this._response) {
@@ -162,6 +176,7 @@ module.exports = {
 				request = http;
 			} else {
 				request = https;
+				this._parsed.rejectUnauthorized = !this._insecureSSL;
 			}
 
 			function checkDownloadedSize() {
@@ -233,7 +248,7 @@ module.exports = {
 				});
 
 				download._request.on("error", function(e) {
-					download._setState("error", "Request error: " + e.message);
+					download._setState("error", e.message);
 				});
 			}
 
@@ -291,6 +306,19 @@ module.exports = {
 		};
 
 
+		HTTPDownloadSchema.methods.retry = function() {
+			if (this._state === "error") {
+				// Accept self signed certs when it was the cause of the error
+				if (this._insecureSSL === false) {
+					this._insecureSSL = true;
+				}
+
+				this._setState("initializing");
+				this._download();
+			}
+		};
+
+
 		HTTPDownloadSchema.methods.buildSharedFile = function(builder, callback) {
 			builder.addFile(path.basename(this.path), this.path);
 			callback();
@@ -318,6 +346,14 @@ module.exports = {
 			}
 
 			return this._state;
+		});
+
+		HTTPDownloadSchema.virtual("statemsg").get(function() {
+			if (this._state === "error") {
+				return errors[this._errormsg] || this._errormsg;
+			} else {
+				return "";
+			}
 		});
 
 

@@ -3,7 +3,7 @@
 
 define(["when", "rest"], function(when, rest) {
 	"use strict";
-	
+
 	return {
 		downloads: {
 			list: function() {
@@ -20,6 +20,10 @@ define(["when", "rest"], function(when, rest) {
 
 			resume: function(id) {
 				return rest.patch("downloads/" + id.replace(/:/g, "/"), { action: "resume" });
+			},
+
+			retry: function(id) {
+				return rest.patch("downloads/" + id.replace(/:/g, "/"), { action: "retry" });
 			},
 
 			cancel: function(id) {

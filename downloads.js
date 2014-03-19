@@ -8,7 +8,7 @@ var providers = {
 
 
 var mapDownloadProperties = [
-		"name", "state", "size", "error",
+		"name", "state", "statemsg", "size", "error",
 		"downloaded", "downloadRate", "seeders",
 		"uploaded", "uploadRate", "leechers",
 		"files"
@@ -137,6 +137,11 @@ function putDownload(req, isPatch, cb) {
 
 			if (req.body.action === "resume") {
 				req.download.resume();
+				return process.nextTick(function() { cb(); });
+			}
+
+			if (req.body.action === "retry") {
+				req.download.retry();
 				return process.nextTick(function() { cb(); });
 			}
 		}

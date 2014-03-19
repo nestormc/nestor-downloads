@@ -10,7 +10,7 @@ define([
 	"ist!templates/applet"
 ], function(ui, router, dom, when, resources, downloadlistTemplate, appletTemplate) {
 	"use strict";
-	
+
 
 	/*!
 	 * Applet updater
@@ -23,7 +23,7 @@ define([
 			renderedApplet = appletTemplate.render({});
 			ui.view("applet").appendChild(renderedApplet);
 		}
-		
+
 		resources.stats.get().then(function(stats) {
 			if (renderedApplet) {
 				renderedApplet.update(stats);
@@ -99,6 +99,11 @@ define([
 			next();
 		});
 
+		router.on("!retry/:id", function(err, req, next) {
+			downloadResource.retry(req.match.id);
+			next();
+		});
+
 		router.on("!cancel/:id", function(err, req, next) {
 			downloadResource.cancel(req.match.id);
 			next();
@@ -124,6 +129,7 @@ define([
 				type: "main",
 				link: "downloads",
 				icon: "downloads",
+				css: "downloads",
 				updater: updateDownloads
 			},
 

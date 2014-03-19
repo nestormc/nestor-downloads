@@ -10,13 +10,13 @@
 			"No downloads"
 		@else
 			@each downloads
-				li.list-item.download[data-id={{ _id }}]
+				li.list-item.download[data-id={{ _id }}][data-state={{ state }}]
 					@with size ? 100 * downloaded / size : 0
 						@use "progress-bar"
 
 					.list-item-status
-						@if ["paused", "complete", "error"].indexOf(state) !== -1
-							"{{ state }}"
+						@if ["initializing", "paused", "complete", "error"].indexOf(state) !== -1
+							"{{ state === 'error' ? statemsg : state }}"
 						@else
 							@if uploadRate > 0
 								span.icon
@@ -37,10 +37,15 @@
 							"{{ size === -1 ? '-' : humanSize(size, 'B') }}"
 
 					.list-item-actions
-						@if state !== "paused" && state !== "complete"
+						@if state !== "paused" && state !== "complete" && state !== "error"
 							a.action-with-icon[title=Pause][href={{ uri("#!downloads/pause/%s", _id) }}]
 								@svg "images/pause.svg"
 								"Pause"
+
+						@if state === "error"
+							a.action-with-icon[title=Retry][href={{ uri("#!downloads/retry/%s", _id) }}]
+								@svg "images/reload.svg"
+								"Retry"
 
 						@if state === "paused"
 							a.action-with-icon[title=Resume][href={{ uri("#!downloads/resume/%s", _id) }}]
