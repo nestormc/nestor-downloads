@@ -33,22 +33,24 @@
 
 						.list-item-subtitle
 							span.icon
-								@svg "images/" + type + ".svg"
+								@svg uri("images/%s.svg", type)
 							"{{ size === -1 ? '-' : humanSize(size, 'B') }}"
 
 					.list-item-actions
 						@if state !== "paused" && state !== "complete"
-							a.action-with-icon[title=Pause][href=#!downloads/pause/{{ _id }}]
+							a.action-with-icon[title=Pause][href={{ uri("#!downloads/pause/%s", _id) }}]
 								@svg "images/pause.svg"
 								"Pause"
 
 						@if state === "paused"
-							a.action-with-icon[title=Resume][href=#!downloads/resume/{{ _id }}]
+							a.action-with-icon[title=Resume][href={{ uri("#!downloads/resume/%s", _id) }}]
 								@svg "images/play.svg"
 								"Resume"
 
-						a.action-with-icon[title={{ state === "complete" || state === "error" ? "Remove" : "Cancel" }}][href=#!downloads/cancel/{{ _id }}]
+						a.action-with-icon \
+						  [title={{ state === "complete" || state === "error" ? "Remove" : "Cancel" }}] \
+						  [href={{ uri("#!downloads/cancel/%s", _id) }}]
 							@svg "images/cancel.svg"
 							"{{ state === 'complete' || state === 'error' ? 'Remove' : 'Cancel' }}"
 
-					
+
