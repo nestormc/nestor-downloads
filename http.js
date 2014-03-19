@@ -125,7 +125,7 @@ module.exports = {
 						logger.info("Completed %s", download.uri);
 						download._setState("complete");
 					}
-					
+
 					download._flushing = false;
 				} else {
 					var buf = download._buffers.shift();
@@ -199,7 +199,7 @@ module.exports = {
 						"Range": "bytes=" + download.downloaded + "-"
 					};
 				}
-				
+
 				download._request = request.get(download._parsed, function(response) {
 					download._response = response;
 
@@ -288,6 +288,12 @@ module.exports = {
 					download._download();
 				});
 			}
+		};
+
+
+		HTTPDownloadSchema.methods.buildSharedFile = function(builder, callback) {
+			builder.addFile(path.basename(this.path), this.path);
+			callback();
 		};
 
 

@@ -36,7 +36,7 @@ function getFileTree(base, files) {
 
 	return tree;
 }
-	
+
 
 function TorrentDownload(url, id) {
 	var self = this;
@@ -76,6 +76,10 @@ TorrentDownload.prototype = {
 
 	resume: function() {
 		return false;
+	},
+
+	buildSharedFile: function(builder, callback) {
+		callback(new Error("Not implemented yet"));
 	},
 
 	get name() {

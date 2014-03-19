@@ -156,6 +156,7 @@ function downloadsPlugin(nestor) {
 	var rest = nestor.rest;
 	var mongoose = nestor.mongoose;
 	var config = nestor.config;
+	var intents = nestor.intents;
 
 	var downloadsResource = rest.resource("downloads")
 		.count(countDownloads)
@@ -170,6 +171,30 @@ function downloadsPlugin(nestor) {
 		.get(getDownload)
 		.del(deleteDownload)
 		.put(putDownload);
+
+	intents.on("nestor:startup", function() {
+		intents.emit("share:provider", "downloads", function(id, builder, callback) {
+			var parts = id.split(":");
+			var name = parts[0];
+			var downloadId = parts[1];
+
+			if (!(name in providers)) {
+				return callback(new Error("Invalid resource id: " + id));
+			}
+
+			var download = providers[name].getDownload(downloadId);
+
+			if (!download) {
+				return callback(new Error("Unknown download: " + id));
+			}
+
+			if (download.state !== "complete") {
+				return callback(new Error("Download not yet complete: " + id));
+			}
+
+			download.buildSharedFile(builder, callback);
+		});
+	});
 
 	Object.keys(providers).forEach(function(name) {
 		providers[name].init(mongoose, logger, config);

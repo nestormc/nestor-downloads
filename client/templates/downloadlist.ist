@@ -47,10 +47,15 @@
 								@svg "images/play.svg"
 								"Resume"
 
+						@if state === "complete"
+							a.action-with-icon[title=Download] \
+							  [href={{ uri("/download/downloads/%s", _id) }}]
+								@svg "images/download.svg"
+								"Download"
+
 						a.action-with-icon \
 						  [title={{ state === "complete" || state === "error" ? "Remove" : "Cancel" }}] \
 						  [href={{ uri("#!downloads/cancel/%s", _id) }}]
 							@svg "images/cancel.svg"
 							"{{ state === 'complete' || state === 'error' ? 'Remove' : 'Cancel' }}"
-
 
