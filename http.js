@@ -64,7 +64,7 @@ module.exports = {
 			this.uploaded = 0;
 			this.uploadRate = 0;
 			this.leechers = 0;
-			this._errormsg = "";
+			this.error = "";
 			this._insecureSSL = null;
 
 			this._flushing = false;
@@ -82,7 +82,7 @@ module.exports = {
 
 		HTTPDownloadSchema.methods._setState = function(state, msg) {
 			this._state = state;
-			this._errormsg = state === "error" ? msg : undefined;
+			this.error = state === "error" ? msg : "";
 
 			if (state === "error") {
 				if (msg === "DEPTH_ZERO_SELF_SIGNED_CERT") {
@@ -348,14 +348,6 @@ module.exports = {
 			return this._state;
 		});
 
-		HTTPDownloadSchema.virtual("statemsg").get(function() {
-			if (this._state === "error") {
-				return errors[this._errormsg] || this._errormsg;
-			} else {
-				return "";
-			}
-		});
-
 
 		HTTPDownloadSchema.virtual("downloadRate").get(function() {
 			return (this.complete || this.error || this.paused) ? 0 : this._downloadRate;
@@ -371,10 +363,6 @@ module.exports = {
 				item._init();
 			});
 		});
-	},
-
-	get downloadCount() {
-		return downloads.length;
 	},
 
 	get downloads() {
