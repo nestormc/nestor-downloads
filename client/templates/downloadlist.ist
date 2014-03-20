@@ -16,7 +16,7 @@
 
 					.list-item-status
 						@if ["initializing", "paused", "complete", "error"].indexOf(state) !== -1
-							"{{ state === 'error' ? statemsg : state }}"
+							"{{ state === 'error' ? error : state }}"
 						@else
 							@if uploadRate > 0
 								span.icon
