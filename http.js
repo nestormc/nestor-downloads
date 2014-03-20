@@ -371,7 +371,7 @@ module.exports = {
 
 	get stats() {
 		return downloads.reduce(function(stats, download) {
-			if (["complete", "error", "pause"].indexOf(download.state) === -1) {
+			if (["complete", "error", "paused"].indexOf(download.state) === -1) {
 				stats.active++;
 			}
 
