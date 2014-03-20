@@ -10,7 +10,6 @@
   "author": "Nicolas Joyard <joyard.nicolas@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "node-torrent": "*",
     "when": "*"
   }
 }
