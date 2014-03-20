@@ -1,14 +1,12 @@
 /*jshint node:true */
 "use strict";
 
-var providers = {
-		"bittorrent": require("./bittorrent"),
-		"http": require("./http")
-	};
+var httpProvider = require("./http");
+var when = require("when");
 
-
+var providers = {};
 var mapDownloadProperties = [
-		"name", "state", "statemsg", "size", "error",
+		"name", "state", "size", "error",
 		"downloaded", "downloadRate", "seeders",
 		"uploaded", "uploadRate", "leechers",
 		"files"
@@ -31,27 +29,66 @@ function mapDownload(providerName, download) {
  */
 
 
-function countDownloads(req, cb) {
-	process.nextTick(function() {
-		cb(null, Object.keys(providers).reduce(function(sum, name) {
-			return sum + providers[name].downloadCount;
-		}, 0));
+function getAllDownloads(cb) {
+	when.map(Object.keys(providers), function(name) {
+		return when(providers[name].downloads).then(function(downloads) {
+			return downloads.map(mapDownload.bind(null, name));
+		});
+	}).then(function(downloads) {
+		cb(null, downloads.reduce(function(lst, providerDownloads) {
+			return lst.concat(providerDownloads);
+		}, []));
+	}).otherwise(function(err) {
+		cb(err);
 	});
 }
 
 
-function listDownloads(req, offset, limit, cb)  {
-	var list = Object.keys(providers).reduce(function(downloads, name) {
-			return downloads.concat(providers[name].downloads.map(mapDownload.bind(null, name)));
-		}, []);
-
-	if (limit > 0) {
-		list = list.slice(offset, offset + limit);
-	} else {
-		list = list.slice(offset);
+function countDownloads(req, cb) {
+	function sendResponse() {
+		cb(null, req._allDownloads.length);
 	}
 
-	process.nextTick(function() { cb(null, list); });
+	if (!req._allDownloads) {
+		getAllDownloads(function(err, downloads) {
+			if (err) {
+				return cb(err);
+			}
+
+			req._allDownloads = downloads;
+			sendResponse();
+		});
+	} else {
+		sendResponse();
+	}
+}
+
+
+function listDownloads(req, offset, limit, cb)  {
+	function sendResponse() {
+		var list;
+
+		if (limit > 0) {
+			list = req._allDownloads.slice(offset, offset + limit);
+		} else {
+			list = req._allDownloads.slice(offset);
+		}
+
+		cb(null, list);
+	}
+
+	if (!req._allDownloads) {
+		getAllDownloads(function(err, downloads) {
+			if (err) {
+				return cb(err);
+			}
+
+			req._allDownloads = downloads;
+			sendResponse();
+		});
+	} else {
+		sendResponse();
+	}
 }
 
 
@@ -77,16 +114,18 @@ function postDownload(req, cb) {
 
 
 function getStats(req, cb) {
-	process.nextTick(function() {
-		cb(null, Object.keys(providers).reduce(function(stats, name) {
-			var pstats = providers[name].stats;
-
-			stats.active += pstats.active;
-			stats.uploadRate += pstats.uploadRate;
-			stats.downloadRate += pstats.downloadRate;
+	when.map(Object.keys(providers), function(name) {
+		return providers[name].stats;
+	}).then(function(pstats) {
+		cb(null, pstats.reduce(function(stats, pstat) {
+			stats.active += pstat.active;
+			stats.uploadRate += pstat.uploadRate;
+			stats.downloadRate += pstat.downloadRate;
 
 			return stats;
 		}, { active: 0, uploadRate: 0, downloadRate: 0 }));
+	}).otherwise(function(err) {
+		cb(err);
 	});
 }
 
@@ -97,15 +136,19 @@ function downloadHook(req, next) {
 	if (!provider) {
 		next.notFound();
 	} else {
-		var download = provider.getDownload(req.params.id);
-
-		if (!download) {
-			next.notFound();
-		} else {
-			req.providerName = req.params.provider;
-			req.download = download;
-			next();
-		}
+		when(provider.getDownload(req.params.id))
+		.then(function(download) {
+			if (!download) {
+				next.notFound();
+			} else {
+				req.providerName = req.params.provider;
+				req.download = download;
+				next();
+			}
+		})
+		.otherwise(function(err) {
+			next(err);
+		});
 	}
 }
 
@@ -177,6 +220,11 @@ function downloadsPlugin(nestor) {
 		.del(deleteDownload)
 		.put(putDownload);
 
+	intents.on("downloads:provider", function(name, provider) {
+		providers[name] = provider;
+		provider.init(mongoose, logger, config);
+	});
+
 	intents.on("nestor:startup", function() {
 		intents.emit("share:provider", "downloads", function(id, builder, callback) {
 			var parts = id.split(":");
@@ -187,22 +235,25 @@ function downloadsPlugin(nestor) {
 				return callback(new Error("Invalid resource id: " + id));
 			}
 
-			var download = providers[name].getDownload(downloadId);
+			when(providers[name].getDownload(downloadId))
+			.then(function(download) {
+				if (!download) {
+					return callback(new Error("Unknown download: " + id));
+				}
 
-			if (!download) {
-				return callback(new Error("Unknown download: " + id));
-			}
+				if (download.state !== "complete") {
+					return callback(new Error("Download not yet complete: " + id));
+				}
 
-			if (download.state !== "complete") {
-				return callback(new Error("Download not yet complete: " + id));
-			}
-
-			download.buildSharedFile(builder, callback);
+				download.buildSharedFile(builder, callback);
+			})
+			.otherwise(function(err) {
+				callback(err);
+			});
 		});
-	});
 
-	Object.keys(providers).forEach(function(name) {
-		providers[name].init(mongoose, logger, config);
+		// Register built-in HTTP provider
+		intents.emit("downloads:provider", "http", httpProvider);
 	});
 }
 
