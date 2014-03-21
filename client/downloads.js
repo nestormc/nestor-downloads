@@ -70,7 +70,7 @@ define([
 			selector: ".downloadlist",
 			childrenArray: "downloads",
 			childrenConfig: "download",
-			childSelector: ".download",
+			childSelector: ".download, #startnew",
 		},
 
 		download: {
