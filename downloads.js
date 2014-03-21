@@ -269,7 +269,7 @@ function downloadsPlugin(nestor) {
 		});
 
 		// Register built-in HTTP provider
-		intents.emit("downloads:provider", "http", httpProvider);
+		// intents.emit("downloads:provider", "http", httpProvider);
 
 		// Initialize providers
 		startup_done = true;

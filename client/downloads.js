@@ -2,13 +2,13 @@
 /*global define */
 
 define([
-	"ui", "router", "dom", "when",
+	"ui", "router", "dom", "when", "ist",
 
 	"resources",
 
 	"ist!templates/downloadlist",
 	"ist!templates/applet"
-], function(ui, router, dom, when, resources, downloadlistTemplate, appletTemplate) {
+], function(ui, router, dom, when, ist, resources, downloadlistTemplate, appletTemplate) {
 	"use strict";
 
 
@@ -45,7 +45,7 @@ define([
 			"click": function() {
 				var input = ui.view("downloads").$("#uri");
 
-				downloadResource.download(input.value)
+				resources.downloads.download(input.value)
 				.otherwise(function(err) {
 					ui.error("Error starting new download", err);
 				});
@@ -56,29 +56,51 @@ define([
 	};
 
 
-	var downloadResource = resources.downloads;
-	var renderedDownloads;
-	function updateDownloads(done) {
-		downloadResource.list()
-		.then(function(downloads) {
-			var view = ui.view("downloads");
+	var contentListConfig = {
+		resource: resources.downloads,
+		fetcher: function() { return resources.downloads.list(); },
+		dataMapper: function(downloads) {
+			return { downloads: downloads };
+		},
 
-			if (!renderedDownloads) {
-				renderedDownloads = downloadlistTemplate.render({ downloads: downloads });
-				view.appendChild(renderedDownloads);
-			} else {
-				renderedDownloads.update({ downloads: downloads });
+		behaviour: downloadListBehaviour,
+
+		root: {
+			template: downloadlistTemplate,
+			selector: ".downloadlist",
+			childrenArray: "downloads",
+			childrenConfig: "download",
+			childSelector: ".download",
+		},
+
+		download: {
+			template: ist("@use 'downloads-download'"),
+			key: "_id",
+			selector: ".download[data-id='%s']"
+		},
+
+		routes: {
+			"!pause/:id": function(view, err, req, next) {
+				resources.downloads.pause(req.match.id);
+				next();
+			},
+
+			"!resume/:id": function(view, err, req, next) {
+				resources.downloads.resume(req.match.id);
+				next();
+			},
+
+			"!retry/:id": function(view, err, req, next) {
+				resources.downloads.retry(req.match.id);
+				next();
+			},
+
+			"!cancel/:id": function(view, err, req, next) {
+				resources.downloads.cancel(req.match.id);
+				next();
 			}
-
-			view.behave(downloadListBehaviour);
-
-			done();
-		})
-		.otherwise(function(err) {
-			ui.error("Error while updating downloads", err);
-		});
-	}
-
+		}
+	};
 
 
 	/*!
@@ -89,30 +111,13 @@ define([
 	ui.started.add(function() {
 		ui.view("applet").show();
 
-		router.on("!pause/:id", function(err, req, next) {
-			downloadResource.pause(req.match.id);
-			next();
-		});
-
-		router.on("!resume/:id", function(err, req, next) {
-			downloadResource.resume(req.match.id);
-			next();
-		});
-
-		router.on("!retry/:id", function(err, req, next) {
-			downloadResource.retry(req.match.id);
-			next();
-		});
-
-		router.on("!cancel/:id", function(err, req, next) {
-			downloadResource.cancel(req.match.id);
-			next();
-		});
+		var downloadsView = ui.view("downloads");
+		ui.helpers.setupContentList(downloadsView, contentListConfig);
 	});
 
 
 	ui.stopping.add(function() {
-		renderedApplet = renderedDownloads = null;
+		renderedApplet = null;
 	});
 
 
@@ -129,8 +134,7 @@ define([
 				type: "main",
 				link: "downloads",
 				icon: "downloads",
-				css: "downloads",
-				updater: updateDownloads
+				css: "downloads"
 			},
 
 			applet: {

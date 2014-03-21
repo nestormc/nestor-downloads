@@ -1,66 +1,71 @@
-.downloadlist.content-box
+@define "downloads-download"
+	li.list-item.download[data-id={{ _id }}][data-state={{ state }}]
+		@with size ? 100 * downloaded / size : 0
+			@use "progress-bar"
+
+		.list-item-status
+			@if ["initializing", "paused", "complete", "error"].indexOf(state) !== -1
+				"{{ state === 'error' ? error : state }}"
+			@else
+				@if uploadRate > 0
+					span.icon
+						@svg "images/upload.svg"
+					"{{ humanSize(uploadRate, 'B/s') }}"
+
+				@if downloadRate > 0
+					span.icon
+						@svg "images/download.svg"
+					"{{ humanSize(downloadRate, 'B/s') }}"
+
+		.list-item-description
+			.list-item-title "{{ name }}"
+
+			.list-item-subtitle
+				span.icon
+					@svg uri("images/%s.svg", type)
+				"{{ size === -1 ? '-' : humanSize(size, 'B') }}"
+
+		.list-item-actions
+			@if state !== "paused" && state !== "complete" && state !== "error"
+				a.action-with-icon[title=Pause][href={{ uri("#!downloads/pause/%s", _id) }}]
+					@svg "images/pause.svg"
+					"Pause"
+
+			@if state === "error"
+				a.action-with-icon[title=Retry][href={{ uri("#!downloads/retry/%s", _id) }}]
+					@svg "images/reload.svg"
+					"Retry"
+
+			@if state === "paused"
+				a.action-with-icon[title=Resume][href={{ uri("#!downloads/resume/%s", _id) }}]
+					@svg "images/play.svg"
+					"Resume"
+
+			@if state === "complete"
+				a.action-with-icon[title=Download] \
+				  [href={{ uri("/download/downloads/%s", _id) }}]
+					@svg "images/download.svg"
+					"Download"
+
+			a.action-with-icon \
+			  [title={{ state === "complete" || state === "error" ? "Remove" : "Cancel" }}] \
+			  [href={{ uri("#!downloads/cancel/%s", _id) }}]
+				@svg "images/cancel.svg"
+				"{{ state === 'complete' || state === 'error' ? 'Remove' : 'Cancel' }}"
+
+
+
+@define "downloads-addform"
 	@if-right "downloads:add"
 		input#uri[type=text]
 		input#startnew[type=button][value=download]
 		br
 		br
 
-	ul.content-list
-		@if downloads.length === 0
-			"No downloads"
-		@else
-			@each downloads
-				li.list-item.download[data-id={{ _id }}][data-state={{ state }}]
-					@with size ? 100 * downloaded / size : 0
-						@use "progress-bar"
 
-					.list-item-status
-						@if ["initializing", "paused", "complete", "error"].indexOf(state) !== -1
-							"{{ state === 'error' ? error : state }}"
-						@else
-							@if uploadRate > 0
-								span.icon
-									@svg "images/upload.svg"
-								"{{ humanSize(uploadRate, 'B/s') }}"
+.downloads.content-box
+	@use "downloads-addform"
 
-							@if downloadRate > 0
-								span.icon
-									@svg "images/download.svg"
-								"{{ humanSize(downloadRate, 'B/s') }}"
-
-					.list-item-description
-						.list-item-title "{{ name }}"
-
-						.list-item-subtitle
-							span.icon
-								@svg uri("images/%s.svg", type)
-							"{{ size === -1 ? '-' : humanSize(size, 'B') }}"
-
-					.list-item-actions
-						@if state !== "paused" && state !== "complete" && state !== "error"
-							a.action-with-icon[title=Pause][href={{ uri("#!downloads/pause/%s", _id) }}]
-								@svg "images/pause.svg"
-								"Pause"
-
-						@if state === "error"
-							a.action-with-icon[title=Retry][href={{ uri("#!downloads/retry/%s", _id) }}]
-								@svg "images/reload.svg"
-								"Retry"
-
-						@if state === "paused"
-							a.action-with-icon[title=Resume][href={{ uri("#!downloads/resume/%s", _id) }}]
-								@svg "images/play.svg"
-								"Resume"
-
-						@if state === "complete"
-							a.action-with-icon[title=Download] \
-							  [href={{ uri("/download/downloads/%s", _id) }}]
-								@svg "images/download.svg"
-								"Download"
-
-						a.action-with-icon \
-						  [title={{ state === "complete" || state === "error" ? "Remove" : "Cancel" }}] \
-						  [href={{ uri("#!downloads/cancel/%s", _id) }}]
-							@svg "images/cancel.svg"
-							"{{ state === 'complete' || state === 'error' ? 'Remove' : 'Cancel' }}"
-
+	ul.downloadlist.content-list
+		@each downloads
+			@use "downloads-download"

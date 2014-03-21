@@ -1,13 +1,17 @@
 /*jshint browser:true */
 /*global define */
 
-define(["when", "rest"], function(when, rest) {
+define(["rest", "io"], function(rest, io) {
 	"use strict";
 
 	return {
 		downloads: {
 			list: function() {
-				return rest.list("downloads", { limit: 50 });
+				return rest.list("downloads", { limit: 0 });
+			},
+
+			watch: function() {
+				return io.watch("downloads");
 			},
 
 			download: function(url) {
