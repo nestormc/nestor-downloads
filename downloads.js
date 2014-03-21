@@ -242,6 +242,14 @@ function downloadsPlugin(nestor) {
 	intents.on("nestor:startup", function() {
 		intents.emit("nestor:watchable", "downloads");
 
+		intents.emit("nestor:right", {
+			name: "downloads:change",
+			description: "Add downloads and control running downloads",
+			route: "/downloads*",
+			methods: ["PUT", "PATCH", "POST", "DELETE"]
+		});
+
+
 		intents.emit("share:provider", "downloads", function(id, builder, callback) {
 			var parts = id.split(":");
 			var name = parts[0];

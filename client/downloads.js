@@ -36,24 +36,8 @@ define([
 
 
 	/*!
-	 * Download list updater
+	 * Download list config
 	 */
-
-
-	var downloadListBehaviour = {
-		"#startnew": {
-			"click": function() {
-				var input = ui.view("downloads").$("#uri");
-
-				resources.downloads.download(input.value)
-				.otherwise(function(err) {
-					ui.error("Error starting new download", err);
-				});
-
-				input.value = "";
-			}
-		}
-	};
 
 
 	var contentListConfig = {
@@ -63,7 +47,20 @@ define([
 			return { downloads: downloads };
 		},
 
-		behaviour: downloadListBehaviour,
+		behaviour: {
+			"#startnew": {
+				"click": function() {
+					var input = ui.view("downloads").$("#uri");
+
+					resources.downloads.download(input.value)
+					.otherwise(function(err) {
+						ui.error("Error starting new download", err);
+					});
+
+					input.value = "";
+				}
+			}
+		},
 
 		root: {
 			template: downloadlistTemplate,
