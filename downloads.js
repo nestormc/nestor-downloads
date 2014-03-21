@@ -205,6 +205,7 @@ function downloadsPlugin(nestor) {
 	var mongoose = nestor.mongoose;
 	var config = nestor.config;
 	var intents = nestor.intents;
+	var startup_done = false;
 
 	var downloadsResource = rest.resource("downloads")
 		.count(countDownloads)
@@ -222,10 +223,25 @@ function downloadsPlugin(nestor) {
 
 	intents.on("downloads:provider", function(name, provider) {
 		providers[name] = provider;
-		provider.init(mongoose, logger, config);
+
+		provider.on("remove", function(download) {
+			intents.emit("nestor:watchable:remove", "downloads", mapDownload(name, download));
+		});
+
+		provider.on("update", function(download) {
+			intents.emit("nestor:watchable:save", "downloads", mapDownload(name, download));
+		});
+
+		if (startup_done && !provider.__initialized) {
+			// Provider was declared after nestor:startup, initialize it
+			provider.__initialized = true;
+			provider.init(mongoose, logger, config);
+		}
 	});
 
 	intents.on("nestor:startup", function() {
+		intents.emit("nestor:watchable", "downloads");
+
 		intents.emit("share:provider", "downloads", function(id, builder, callback) {
 			var parts = id.split(":");
 			var name = parts[0];
@@ -254,6 +270,17 @@ function downloadsPlugin(nestor) {
 
 		// Register built-in HTTP provider
 		intents.emit("downloads:provider", "http", httpProvider);
+
+		// Initialize providers
+		startup_done = true;
+		Object.keys(providers).forEach(function(name) {
+			var provider = providers[name];
+
+			if (!provider.__initialized) {
+				provider.__initialized = true;
+				provider.init(mongoose, logger, config);
+			}
+		});
 	});
 }
 
