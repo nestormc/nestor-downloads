@@ -38,6 +38,10 @@ define(["rest", "io"], function(rest, io) {
 		stats: {
 			get: function() {
 				return rest.get("downloads/stats");
+			},
+
+			watch: function() {
+				return io.watch("download-stats");
 			}
 		}
 	};

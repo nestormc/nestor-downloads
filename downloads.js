@@ -226,10 +226,18 @@ function downloadsPlugin(nestor) {
 
 		provider.on("remove", function(download) {
 			intents.emit("nestor:watchable:remove", "downloads", mapDownload(name, download));
+
+			getStats(null, function(err, stats) {
+				intents.emit("nestor:watchable:save", "download-stats", stats);
+			});
 		});
 
 		provider.on("update", function(download) {
 			intents.emit("nestor:watchable:save", "downloads", mapDownload(name, download));
+
+			getStats(null, function(err, stats) {
+				intents.emit("nestor:watchable:save", "download-stats", stats);
+			});
 		});
 
 		if (startup_done && !provider.__initialized) {
@@ -241,6 +249,7 @@ function downloadsPlugin(nestor) {
 
 	intents.on("nestor:startup", function() {
 		intents.emit("nestor:watchable", "downloads");
+		intents.emit("nestor:watchable", "download-stats");
 
 		intents.emit("nestor:right", {
 			name: "downloads:change",

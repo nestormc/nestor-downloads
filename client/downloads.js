@@ -18,18 +18,22 @@ define([
 
 
 	var renderedApplet;
-	function updateApplet(done) {
+	var appletWatcher;
+
+	function renderApplet(view) {
 		if (!renderedApplet) {
 			renderedApplet = appletTemplate.render({});
-			ui.view("applet").appendChild(renderedApplet);
+			view.appendChild(renderedApplet);
 		}
 
-		resources.stats.get().then(function(stats) {
-			if (renderedApplet) {
-				renderedApplet.update(stats);
-			}
+		resources.stats.get()
+		.then(function(stats) {
+			renderedApplet.update(stats);
 
-			done();
+			appletWatcher = resources.stats.watch();
+			appletWatcher.updated.add(function(stats) {
+				renderedApplet.update(stats);
+			});
 		});
 	}
 
@@ -106,7 +110,9 @@ define([
 
 
 	ui.started.add(function() {
-		ui.view("applet").show();
+		var appletView = ui.view("applet");
+		appletView.show();
+		renderApplet(appletView);
 
 		var downloadsView = ui.view("downloads");
 		ui.helpers.setupContentList(downloadsView, contentListConfig);
@@ -115,6 +121,11 @@ define([
 
 	ui.stopping.add(function() {
 		renderedApplet = null;
+
+		if (appletWatcher) {
+			appletWatcher.dispose();
+			appletWatcher = null;
+		}
 	});
 
 
@@ -136,8 +147,7 @@ define([
 
 			applet: {
 				type: "applet",
-				css: "applet",
-				updater: updateApplet
+				css: "applet"
 			}
 		}
 	};
