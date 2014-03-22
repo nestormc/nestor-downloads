@@ -101,7 +101,7 @@ httpProvider.init = function(mongoose, logger, config) {
 
 	HTTPDownloadSchema.methods._setState = function(state, msg) {
 		this._state = state;
-		this.error = state === "error" ? msg : "";
+		this.error = state === "error" ? (errors[msg] || msg) : "";
 
 		if (state === "error") {
 			if (msg === "DEPTH_ZERO_SELF_SIGNED_CERT") {
@@ -188,12 +188,13 @@ httpProvider.init = function(mongoose, logger, config) {
 		};
 	}());
 
-
-	HTTPDownloadSchema.methods._download = function() {
+	HTTPDownloadSchema.methods._download = function(uri) {
 		var download = this,
 			request;
 
 		logger.info("Starting download for %s", this.uri);
+
+		var parsed = uri ? url.parse(uri) : this._parsed;
 
 		if (this._parsed.protocol === "http:") {
 			request = http;
@@ -241,8 +242,19 @@ httpProvider.init = function(mongoose, logger, config) {
 			download._request = request.get(download._parsed, function(response) {
 				download._response = response;
 
-				if (response.statusCode >= 400) {
-					download._setState("error", "HTTP error " + response.statusCode);
+				if (response.statusCode === 301 || response.statusCode === 302) {
+					if (!("location" in response.headers)) {
+						logger.warn("Redirect without location for %s", download.uri);
+					} else {
+						logger.warn("Redirect %s to %s", download.uri, response.headers.location);
+						download._download(response.headers.location);
+					}
+
+					return;
+				}
+
+				if (response.statusCode !== 200 && response.statusCode !== 416) {
+					download._setState("error", "HTTP status " + response.statusCode);
 					return;
 				}
 
