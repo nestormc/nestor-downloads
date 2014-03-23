@@ -253,7 +253,7 @@ httpProvider.init = function(mongoose, logger, config) {
 					return;
 				}
 
-				if (response.statusCode !== 200 && response.statusCode !== 416) {
+				if ([200, 206, 416].indexOf(response.statusCode) === -1) {
 					download._setState("error", "HTTP status " + response.statusCode);
 					return;
 				}
