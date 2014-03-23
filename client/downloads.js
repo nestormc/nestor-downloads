@@ -51,27 +51,12 @@ define([
 			return { downloads: downloads };
 		},
 
-		behaviour: {
-			"#startnew": {
-				"click": function() {
-					var input = ui.view("downloads").$("#uri");
-
-					resources.downloads.download(input.value)
-					.otherwise(function(err) {
-						ui.error("Error starting new download", err);
-					});
-
-					input.value = "";
-				}
-			}
-		},
-
 		root: {
 			template: downloadlistTemplate,
 			selector: ".downloadlist",
 			childrenArray: "downloads",
 			childrenConfig: "download",
-			childSelector: ".download, #startnew",
+			childSelector: ".download, .content-box-actions",
 		},
 
 		download: {
@@ -116,6 +101,45 @@ define([
 
 		var downloadsView = ui.view("downloads");
 		ui.helpers.setupContentList(downloadsView, contentListConfig);
+
+		var addView = ui.view("new-download");
+		var addForm = ui.helpers.form({
+			title: "Add new download",
+			submitLabel: "Add",
+			cancelLabel: "Cancel",
+
+			onSubmit: function(values) {
+				resources.downloads.download(values.uri);
+				addView.hide();
+			},
+
+			onCancel: function() {
+				addView.hide();
+			},
+
+			fields: [
+				{
+					type: "text", name: "uri", label: "Download URL",  value: "",
+					validate: function(value) {
+						if (!value.match(/^(https?|magnet):/)) {
+							return "Invalid URL";
+						}
+					}
+				}
+			]
+		});
+
+		addView.appendChild(addForm);
+		addView.displayed.add(function() { addForm.focus(); });
+
+		router.on("!add", function(err, req, next) {
+			addView.show();
+			addView.resize();
+
+			addForm.setValues({ uri: "" });
+
+			next();
+		});
 	});
 
 
@@ -148,6 +172,10 @@ define([
 			applet: {
 				type: "applet",
 				css: "applet"
+			},
+
+			"new-download": {
+				type: "popup"
 			}
 		}
 	};

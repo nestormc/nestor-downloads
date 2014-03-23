@@ -55,17 +55,12 @@
 					"{{ state === 'complete' || state === 'error' ? 'Remove' : 'Cancel' }}"
 
 
-
-@define "downloads-addform"
-	@if-right "downloads:change"
-		input#uri[type=text]
-		input#startnew[type=button][value=download]
-		br
-		br
-
-
 .downloads.content-box
-	@use "downloads-addform"
+	.content-box-actions
+		@if-right "downloads:change"
+			a.action-with-icon[href=#!downloads/add]
+				@svg "images/add.svg"
+				"Add new download"
 
 	ul.downloadlist.content-list
 		@each downloads
