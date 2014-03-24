@@ -159,7 +159,7 @@ httpProvider.init = function(mongoose, logger, config) {
 			if (download._buffers.length === 0) {
 				if (download.size === download.downloaded) {
 					logger.info("Completed %s", download.uri);
-					httpProvider.emit("complete", this);
+					httpProvider.emit("complete", download);
 					download._setState("complete");
 				}
 
