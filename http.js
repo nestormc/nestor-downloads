@@ -36,11 +36,10 @@ Object.defineProperties(httpProvider, {
 	"stats": {
 		get: function() {
 			return downloads.reduce(function(stats, download) {
-				if (["complete", "error", "paused"].indexOf(download.state) === -1) {
+				if (["complete", "error", "paused"].indexOf(download._state) === -1) {
 					stats.active++;
+					stats.downloadRate += download.downloadRate;
 				}
-
-				stats.downloadRate += download.downloadRate;
 
 				return stats;
 			}, { active: 0, uploadRate: 0, downloadRate: 0 });
@@ -89,11 +88,12 @@ httpProvider.init = function(mongoose, logger, config) {
 		this._flushing = false;
 		this._rateStartTime = 0;
 		this._rateLength = 0;
-		this._setState("initializing");
 
-		this.save();
-
-		if (!this.paused && !this.complete) {
+		if (this.paused) {
+			this._setState("paused");
+		} else if (this.complete) {
+			this._setState("complete");
+		} else {
 			this._download();
 		}
 	};
@@ -103,34 +103,33 @@ httpProvider.init = function(mongoose, logger, config) {
 		this._state = state;
 		this.error = state === "error" ? (errors[msg] || msg) : "";
 
+		if (state === "error" || state === "paused" || state === "complete") {
+			this._downloadRate = 0;
+		}
+
 		if (state === "error") {
+			this._abortDownload();
+
 			if (msg === "DEPTH_ZERO_SELF_SIGNED_CERT") {
 				// Self signed cert, mark it as such
 				this._insecureSSL = false;
 			}
 
 			logger.error("Error downloading %s: %s", this.uri, msg);
-
-			if (this._response) {
-				this._response.pause();
-				delete this._response;
-			}
-
-			if (this._request) {
-				this._request.abort();
-				delete this._request;
-			}
 		}
 
-		if (state === "error" || state === "complete") {
-			this._downloadRate = 0;
+		if (state === "paused") {
+			this._abortDownload();
+
+			this.paused = true;
+			this.save();
 		}
 
 		if (state === "complete") {
-			this.complete = true;
 			delete this._response;
 			delete this._request;
 
+			this.complete = true;
 			this.save();
 		}
 
@@ -193,6 +192,7 @@ httpProvider.init = function(mongoose, logger, config) {
 			request;
 
 		logger.info("Starting download for %s", this.uri);
+		this._setState("initializing");
 
 		var parsed = uri ? url.parse(uri) : this._parsed;
 
@@ -291,6 +291,19 @@ httpProvider.init = function(mongoose, logger, config) {
 	};
 
 
+	HTTPDownloadSchema.methods._abortDownload = function() {
+		if (this._response) {
+			this._response.pause();
+			delete this._response;
+		}
+
+		if (this._request) {
+			this._request.abort();
+			delete this._request;
+		}
+	};
+
+
 	HTTPDownloadSchema.methods.cancel = function() {
 		var download = this;
 
@@ -301,8 +314,8 @@ httpProvider.init = function(mongoose, logger, config) {
 			download.remove();
 		}
 
-		if (!this.complete) {
-			this.pause(true);
+		if (this._state !== "complete") {
+			this._abortDownload();
 			fs.unlink(this.path, function() {
 				remove();
 			});
@@ -312,38 +325,15 @@ httpProvider.init = function(mongoose, logger, config) {
 	};
 
 
-	HTTPDownloadSchema.methods.pause = function(dontSave) {
-		this.paused = true;
-
-		if (this._response) {
-			this._response.pause();
-			delete this._response;
-		}
-
-		if (this._request) {
-			this._request.abort();
-			delete this._request;
-		}
-
-		if (!dontSave) {
-			this.save();
-		}
-
-		httpProvider.emit("update", this);
+	HTTPDownloadSchema.methods.pause = function() {
+		this._setState("paused");
 	};
 
 
 	HTTPDownloadSchema.methods.resume = function() {
-		var download = this;
-
-		if (this.paused) {
-			this.paused = false;
-			this.save(function() {
-				download._download();
-			});
+		if (this._state === "paused") {
+			this._download();
 		}
-
-		httpProvider.emit("update", this);
 	};
 
 
@@ -354,7 +344,6 @@ httpProvider.init = function(mongoose, logger, config) {
 				this._insecureSSL = true;
 			}
 
-			this._setState("initializing");
 			this._download();
 		}
 	};
@@ -374,24 +363,12 @@ httpProvider.init = function(mongoose, logger, config) {
 
 
 	HTTPDownloadSchema.virtual("state").get(function() {
-		if (this.complete) {
-			return "complete";
-		}
-
-		if (this.paused) {
-			return "paused";
-		}
-
-		if (this.error) {
-			return "error";
-		}
-
 		return this._state;
 	});
 
 
 	HTTPDownloadSchema.virtual("downloadRate").get(function() {
-		return (this.complete || this.error || this.paused) ? 0 : this._downloadRate;
+		return this._downloadRate;
 	});
 
 	HTTPDownload = mongoose.model("httpDownload", HTTPDownloadSchema);
