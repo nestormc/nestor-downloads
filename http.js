@@ -159,6 +159,7 @@ httpProvider.init = function(mongoose, logger, config) {
 			if (download._buffers.length === 0) {
 				if (download.size === download.downloaded) {
 					logger.info("Completed %s", download.uri);
+					httpProvider.emit("complete", this);
 					download._setState("complete");
 				}
 
@@ -357,7 +358,7 @@ httpProvider.init = function(mongoose, logger, config) {
 
 	HTTPDownloadSchema.virtual("files").get(function() {
 		var files = {};
-		files[this.name] = this.size;
+		files[this.path] = this.size;
 		return files;
 	});
 
