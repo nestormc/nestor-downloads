@@ -230,7 +230,7 @@ function downloadsPlugin(nestor) {
 		.put(putDownload);
 
 
-	function completed(files) {
+	function completed(files, sourceDownload) {
 		(files || []).forEach(function(filepath) {
 			misc.mimetype(filepath, function(err, path, mimetype) {
 				if (err) {
@@ -246,6 +246,7 @@ function downloadsPlugin(nestor) {
 				intents.emit("nestor:scheduler:enqueue", "downloads:handle-file", {
 					path: path,
 					mimetype: mimetype,
+					sourceDownload: sourceDownload,
 					callback: function(err, files) {
 						if (err) {
 							logger.error("%s file handler threw error for %s: %s", mimetype, path, err.message);
@@ -284,7 +285,7 @@ function downloadsPlugin(nestor) {
 		});
 
 		provider.on("complete", function(download) {
-			completed(Object.keys(download.files));
+			completed(Object.keys(download.files), download);
 		});
 
 		if (startup_done && !provider.__initialized) {
@@ -302,7 +303,14 @@ function downloadsPlugin(nestor) {
 
 		// Register scheduler job processor for finished files
 		intents.emit("nestor:scheduler:register", "downloads:handle-file", function(data) {
-			fileHandlers.handle(data.path, data.mimetype, data.callback);
+			var deferred = when.defer();
+
+			fileHandlers.handle(data.path, data.mimetype, data.sourceDownload, function(err, files) {
+				data.callback(err, files);
+				deferred.resolve();
+			});
+
+			return deferred.promise;
 		});
 
 		// Register rights

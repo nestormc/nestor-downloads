@@ -67,7 +67,7 @@ function spawnHandler(command, args, options, regex, callback) {
 
 
 var handlers = {
-	"application/x-rar": function(file, callback) {
+	"application/x-rar": function(file, source, callback) {
 		spawnHandler(
 			"unrar",
 			["x", "y", file],
@@ -83,7 +83,7 @@ var handlers = {
 		);
 	},
 
-	"application/zip": function(file, callback) {
+	"application/zip": function(file, source, callback) {
 		spawnHandler(
 			"unzip",
 			[file],
@@ -99,7 +99,7 @@ var handlers = {
 		);
 	},
 
-	"application/x-tar": function(file, callback) {
+	"application/x-tar": function(file, source, callback) {
 		spawnHandler(
 			"tar",
 			["xvf", file],
@@ -115,7 +115,7 @@ var handlers = {
 		);
 	},
 
-	"application/x-gzip": function(file, callback) {
+	"application/x-gzip": function(file, source, callback) {
 		spawnHandler(
 			"gunzip",
 			["-v"],
@@ -125,7 +125,7 @@ var handlers = {
 		);
 	},
 
-	"application/x-bzip2": function(file, callback) {
+	"application/x-bzip2": function(file, source, callback) {
 		spawnHandler(
 			"bunzip2",
 			["-v"],
@@ -145,8 +145,8 @@ exports.canHandle = function(mimetype) {
 	return mimetype in handlers;
 };
 
-exports.handle = function(path, mimetype, callback) {
+exports.handle = function(path, mimetype, source, callback) {
 	if (mimetype in handlers) {
-		handlers[mimetype](path, callback);
+		handlers[mimetype](path, source, callback);
 	}
 };
