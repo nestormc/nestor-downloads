@@ -69,7 +69,7 @@ httpProvider.init = function(mongoose, logger, config) {
 			this.name = path.basename(this.path);
 		} else {
 			if (path.basename(this._parsed.pathname).length) {
-				this.name = path.basename(this._parsed.pathname);
+				this.name = decodeURIComponent(path.basename(this._parsed.pathname));
 			} else {
 				this.name = this.uri.replace(/[:\/]/g, "_");
 			}
