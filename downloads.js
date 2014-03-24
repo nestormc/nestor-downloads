@@ -6,6 +6,8 @@ var fileHandlers = require("./handlers");
 
 var when = require("when");
 var path = require("path");
+var fs = require("fs");
+var mkdirp = require("mkdirp");
 
 var providers = {};
 
@@ -232,29 +234,44 @@ function downloadsPlugin(nestor) {
 
 	function completed(files, sourceDownload) {
 		(files || []).forEach(function(filepath) {
-			misc.mimetype(filepath, function(err, path, mimetype) {
+			misc.mimetype(filepath, function(err, filepath, mimetype) {
 				if (err) {
 					logger.error("Cannot get mimetype for %s: %s", filepath, err.message);
 					return;
 				}
 
 				if (!fileHandlers.canHandle(mimetype)) {
-					logger.warn("No handler found for %s (%s)", path, mimetype);
-					return;
-				}
+					if (config.moveTo) {
+						var dest = path.join(config.moveTo, path.relative(config.incoming || ".", filepath));
 
-				intents.emit("nestor:scheduler:enqueue", "downloads:handle-file", {
-					path: path,
-					mimetype: mimetype,
-					sourceDownload: sourceDownload,
-					callback: function(err, files) {
-						if (err) {
-							logger.error("%s file handler threw error for %s: %s", mimetype, path, err.message);
-						} else {
-							completed(files);
-						}
+						mkdirp(path.basename(dest), function(err) {
+							if (err) {
+								logger.error("Could not create %s: %s", config.moveTo, err.message);
+							} else {
+								fs.rename(filepath, dest, function(err) {
+									if (err) {
+										logger.error("Could not move %s to %s: %s", filepath, config.moveTo, err.message);
+									}
+								});
+							}
+						});
+
+						return;
 					}
-				});
+				} else {
+					intents.emit("nestor:scheduler:enqueue", "downloads:handle-file", {
+						path: filepath,
+						mimetype: mimetype,
+						sourceDownload: sourceDownload,
+						callback: function(err, files) {
+							if (err) {
+								logger.error("%s file handler threw error for %s: %s", mimetype, path, err.message);
+							} else {
+								completed(files);
+							}
+						}
+					});
+				}
 			});
 		});
 	}
