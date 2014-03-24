@@ -2,9 +2,14 @@
 "use strict";
 
 var httpProvider = require("./http");
+var fileHandlers = require("./handlers");
+
 var when = require("when");
+var path = require("path");
 
 var providers = {};
+
+
 var mapDownloadProperties = [
 		"name", "state", "size", "error",
 		"downloaded", "downloadRate", "seeders",
@@ -24,7 +29,7 @@ function mapDownload(providerName, download) {
 }
 
 
-/**
+/*!
  * REST handlers
  */
 
@@ -194,6 +199,7 @@ function putDownload(req, isPatch, cb) {
 }
 
 
+
 /*!
  * Plugin interface
  */
@@ -205,6 +211,8 @@ function downloadsPlugin(nestor) {
 	var mongoose = nestor.mongoose;
 	var config = nestor.config;
 	var intents = nestor.intents;
+	var misc = nestor.misc;
+
 	var startup_done = false;
 
 	var downloadsResource = rest.resource("downloads")
@@ -220,6 +228,41 @@ function downloadsPlugin(nestor) {
 		.get(getDownload)
 		.del(deleteDownload)
 		.put(putDownload);
+
+
+	function completed(files) {
+		(files || []).forEach(function(filepath) {
+			misc.mimetype(filepath, function(err, path, mimetype) {
+				if (err) {
+					logger.error("Cannot get mimetype for %s: %s", filepath, err.message);
+					return;
+				}
+
+				if (!fileHandlers.canHandle(mimetype)) {
+					logger.warn("No handler found for %s (%s)", path, mimetype);
+					return;
+				}
+
+				intents.emit("nestor:scheduler:enqueue", "downloads:handle-file", {
+					path: path,
+					mimetype: mimetype,
+					callback: function(err, files) {
+						if (err) {
+							logger.error("%s file handler threw error for %s: %s", mimetype, path, err.message);
+						} else {
+							completed(files);
+						}
+					}
+				});
+			});
+		});
+	}
+
+
+	intents.on("downloads:filehandler", function(mimetype, handler) {
+		fileHandlers.register(mimetype, handler);
+	});
+
 
 	intents.on("downloads:provider", function(name, provider) {
 		providers[name] = provider;
@@ -240,6 +283,10 @@ function downloadsPlugin(nestor) {
 			});
 		});
 
+		provider.on("complete", function(download) {
+			completed(Object.keys(download.files));
+		});
+
 		if (startup_done && !provider.__initialized) {
 			// Provider was declared after nestor:startup, initialize it
 			provider.__initialized = true;
@@ -247,10 +294,18 @@ function downloadsPlugin(nestor) {
 		}
 	});
 
+
 	intents.on("nestor:startup", function() {
+		// Register watchables
 		intents.emit("nestor:watchable", "downloads");
 		intents.emit("nestor:watchable", "download-stats");
 
+		// Register scheduler job processor for finished files
+		intents.emit("nestor:scheduler:register", "downloads:handle-file", function(data) {
+			fileHandlers.handle(data.path, data.mimetype, data.callback);
+		});
+
+		// Register rights
 		intents.emit("nestor:right", {
 			name: "downloads:change",
 			description: "Add downloads and control running downloads",
@@ -258,7 +313,7 @@ function downloadsPlugin(nestor) {
 			methods: ["PUT", "PATCH", "POST", "DELETE"]
 		});
 
-
+		// Register share provider
 		intents.emit("share:provider", "downloads", function(id, builder, callback) {
 			var parts = id.split(":");
 			var name = parts[0];
@@ -305,6 +360,7 @@ function downloadsPlugin(nestor) {
 downloadsPlugin.manifest = {
 	name: "downloads",
 	description: "Downloads",
+	recommends: ["nestor-media"],
 	client: {
 		public: __dirname + "/client/public",
 		build: {
