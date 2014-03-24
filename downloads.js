@@ -244,7 +244,7 @@ function downloadsPlugin(nestor) {
 					if (config.moveTo) {
 						var dest = path.join(config.moveTo, path.relative(config.incoming || ".", filepath));
 
-						mkdirp(path.basename(dest), function(err) {
+						mkdirp(path.dirname(dest), function(err) {
 							if (err) {
 								logger.error("Could not create %s: %s", config.moveTo, err.message);
 							} else {
