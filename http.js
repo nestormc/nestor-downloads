@@ -278,7 +278,10 @@ httpProvider.init = function(mongoose, logger, config) {
 				}
 
 				response.on("data", function(chunk) {
-					download._setState("downloading");
+					if (download._state !== "downloading") {
+						download._setState("downloading");
+					}
+
 					download._writeBuffer(chunk);
 				});
 			});
