@@ -10,6 +10,7 @@ var fs = require("fs");
 var mkdirp = require("mkdirp");
 
 var providers = {};
+var searchers = {};
 
 
 var mapDownloadProperties = [
@@ -231,6 +232,21 @@ function downloadsPlugin(nestor) {
 		.del(deleteDownload)
 		.put(putDownload);
 
+	rest.resource("download-search")
+		.get(function(req, cb) {
+			cb(null, Object.keys(searchers));
+		})
+		.sub(":searcher/:query").get(function(req, cb) {
+			var searcher = req.params.searcher;
+
+			if (!(searcher in searchers)) {
+				return cb.notFound();
+			}
+
+			searchers[searcher](req.params.query, cb);
+		});
+
+
 
 	function completed(files, sourceDownload) {
 		(files || []).forEach(function(filepath) {
@@ -310,6 +326,11 @@ function downloadsPlugin(nestor) {
 			provider.__initialized = true;
 			provider.init(mongoose, logger, config);
 		}
+	});
+
+
+	intents.on("downloads:searcher", function(name, searcher) {
+		searchers[name] = searcher;
 	});
 
 
