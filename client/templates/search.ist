@@ -1,0 +1,25 @@
+.content-box
+	@dom searchForm
+
+@if typeof search !== "undefined"
+	@with search
+		.content-box
+			ul.content-list.results
+				@if loading
+					li.content-list-empty
+						"Searching for \"{{ query }}\" on {{ searcher }}"
+				@else
+					@if results.length
+						@each results
+							li.list-item
+								.list-item-status "{{ humanSize(size, 'B') }}, {{ seeders }} seeders"
+
+								.list-item-description
+									.list-item-title "{{ name }}"
+
+								.list-item-actions
+									a.action-with-icon[title=Download][href={{ uri("#!downloads/download/%s", magnet) }}]
+										@svg "images/download.svg"
+										"Download"
+					@else
+						li.content-list-empty "No results :'("

@@ -43,6 +43,14 @@ define(["rest", "io"], function(rest, io) {
 			watch: function() {
 				return io.watch("download-stats");
 			}
+		},
+
+		searchers: function() {
+			return rest.get("download-search");
+		},
+
+		search: function(searcher, query) {
+			return rest.get("download-search/%s/%s", searcher, query);
 		}
 	};
 });

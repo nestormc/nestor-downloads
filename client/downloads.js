@@ -7,8 +7,9 @@ define([
 	"resources",
 
 	"ist!templates/downloadlist",
-	"ist!templates/applet"
-], function(ui, router, dom, when, ist, resources, downloadlistTemplate, appletTemplate) {
+	"ist!templates/applet",
+	"ist!templates/search"
+], function(ui, router, dom, when, ist, resources, downloadlistTemplate, appletTemplate, searchTemplate) {
 	"use strict";
 
 
@@ -132,6 +133,54 @@ define([
 		addView.appendChild(addForm);
 		addView.displayed.add(function() { addForm.focus(); });
 
+		var searchView = ui.view("search");
+		var searchForm;
+		var searchContext = {};
+		var searchRendered;
+
+		searchView.displayed.add(function() {
+			if (!searchForm) {
+				resources.searchers()
+				.then(function(searcherlist) {
+					var searchers = {};
+					searcherlist.forEach(function(searcher) {
+						searchers[searcher] = searcher;
+					});
+
+					searchForm = ui.helpers.form({
+						title: "Search for downloads",
+						submitLabel: "Search",
+
+						onSubmit: function(values) {
+							searchContext.search = { loading: true, searcher: values.searcher, query: values.query };
+							searchRendered.update();
+
+							resources.search(values.searcher, values.query)
+							.then(function(results) {
+								searchContext.search = { loading: false, results: results };
+								searchRendered.update();
+							});
+						},
+
+						fields: [
+							{ type: "select", name: "searcher", label: "Search on", value: "", options: searchers },
+							{ type: "text", name: "query", label: "Search query", value: "" }
+						]
+					});
+
+					searchContext = { searchForm: searchForm };
+					searchRendered = searchTemplate.render(searchContext);
+					searchView.appendChild(searchRendered);
+				});
+			}
+		});
+
+
+		router.on("!download/:uri", function(err, req, next) {
+			resources.downloads.download(req.match.uri);
+			next();
+		});
+
 		router.on("!add", function(err, req, next) {
 			addView.show();
 			addView.resize();
@@ -167,6 +216,12 @@ define([
 				link: "downloads",
 				icon: "downloads",
 				css: "downloads"
+			},
+
+			search: {
+				type: "main",
+				link: "search",
+				icon: "search"
 			},
 
 			applet: {
