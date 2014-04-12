@@ -22,7 +22,7 @@
 
 			.list-item-subtitle
 				span.icon
-					@icon type
+					@icon icon
 				"{{ size === -1 ? '-' : humanSize(size, 'B') }}"
 
 		@if-right "downloads:change"

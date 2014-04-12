@@ -28,6 +28,8 @@ function mapDownload(providerName, download) {
 		data[key] = download[key];
 	});
 
+	data.icon = download.icon || "downloads:download";
+
 	return data;
 }
 
