@@ -19,7 +19,7 @@
 
 								.list-item-actions
 									a.action-with-icon[title=Download][href={{ uri("#!downloads/download/%s", magnet) }}]
-										@svg "images/download.svg"
+										@icon "download"
 										"Download"
 					@else
 						li.content-list-empty "No results :'("

@@ -9,12 +9,12 @@
 			@else
 				@if uploadRate > 0
 					span.icon
-						@svg "images/upload.svg"
+						@icon "upload"
 					"{{ humanSize(uploadRate, 'B/s') }}"
 
 				@if downloadRate > 0
 					span.icon
-						@svg "images/download.svg"
+						@icon "download"
 					"{{ humanSize(downloadRate, 'B/s') }}"
 
 		.list-item-description
@@ -29,29 +29,29 @@
 			.list-item-actions
 				@if state !== "paused" && state !== "complete" && state !== "error"
 					a.action-with-icon[title=Pause][href={{ uri("#!downloads/pause/%s", _id) }}]
-						@svg "images/pause.svg"
+						@icon "pause"
 						"Pause"
 
 				@if state === "error"
 					a.action-with-icon[title=Retry][href={{ uri("#!downloads/retry/%s", _id) }}]
-						@svg "images/reload.svg"
+						@icon "reload"
 						"Retry"
 
 				@if state === "paused"
 					a.action-with-icon[title=Resume][href={{ uri("#!downloads/resume/%s", _id) }}]
-						@svg "images/play.svg"
+						@icon "play"
 						"Resume"
 
 				@if state === "complete"
 					a.action-with-icon[title=Download] \
 					  [href={{ uri("/download/downloads/%s", _id) }}]
-						@svg "images/download.svg"
+						@icon "download"
 						"Download"
 
 				a.action-with-icon \
 				  [title={{ state === "complete" || state === "error" ? "Remove" : "Cancel" }}] \
 				  [href={{ uri("#!downloads/cancel/%s", _id) }}]
-					@svg "images/cancel.svg"
+					@icon "cancel"
 					"{{ state === 'complete' || state === 'error' ? 'Remove' : 'Cancel' }}"
 
 
@@ -59,7 +59,7 @@
 	.content-box-actions
 		@if-right "downloads:change"
 			a.action-with-icon[href=#!downloads/add]
-				@svg "images/add.svg"
+				@icon "add"
 				"Add new download"
 
 	ul.downloadlist.content-list
