@@ -45,7 +45,7 @@
 				@if state === "complete"
 					a.action-with-icon[title=Download] \
 					  [href={{ uri("/download/downloads/%s", _id) }}]
-						@icon "downloads:download"
+						@icon "share:download"
 						"Download"
 
 				a.action-with-icon \
