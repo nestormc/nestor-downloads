@@ -9,12 +9,12 @@
 			@else
 				@if uploadRate > 0
 					span.icon
-						@icon "upload"
+						@icon "downloads:upload"
 					"{{ humanSize(uploadRate, 'B/s') }}"
 
 				@if downloadRate > 0
 					span.icon
-						@icon "download"
+						@icon "downloads:download"
 					"{{ humanSize(downloadRate, 'B/s') }}"
 
 		.list-item-description
@@ -45,7 +45,7 @@
 				@if state === "complete"
 					a.action-with-icon[title=Download] \
 					  [href={{ uri("/download/downloads/%s", _id) }}]
-						@icon "download"
+						@icon "downloads:download"
 						"Download"
 
 				a.action-with-icon \

@@ -214,7 +214,7 @@ define([
 			downloads: {
 				type: "main",
 				link: "downloads",
-				icon: "downloads",
+				icon: "downloads:downloads",
 				css: "downloads"
 			},
 
