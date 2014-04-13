@@ -236,7 +236,7 @@ define([
 			search: {
 				type: "main",
 				link: "search",
-				icon: "search"
+				icon: "downloads:search"
 			},
 
 			applet: {
