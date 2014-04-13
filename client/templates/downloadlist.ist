@@ -1,58 +1,60 @@
 @define "downloads-download"
 	li.list-item.download[data-id={{ _id }}][data-state={{ state }}]
-		@with size ? 100 * downloaded / size : 0
-			@use "progress-bar"
+		.list-item-head
+			@with size ? 100 * downloaded / size : 0
+				@use "progress-bar"
 
-		.list-item-status
-			@if ["initializing", "paused", "complete", "error"].indexOf(state) !== -1
-				"{{ state === 'error' ? error : state }}"
-			@else
-				@if uploadRate > 0
-					span.icon
-						@icon "downloads:upload"
-					"{{ humanSize(uploadRate, 'B/s') }}"
-
-				@if downloadRate > 0
-					span.icon
-						@icon "downloads:download"
-					"{{ humanSize(downloadRate, 'B/s') }}"
-
-		.list-item-description
 			.list-item-title "{{ name }}"
+
+			.list-item-status
+				@if ["initializing", "paused", "complete", "error"].indexOf(state) !== -1
+					"{{ state === 'error' ? error : state }}"
+				@else
+					@if uploadRate > 0
+						span.icon
+							@icon "downloads:upload"
+						"{{ humanSize(uploadRate, 'B/s') }}"
+
+					@if downloadRate > 0
+						span.icon
+							@icon "downloads:download"
+						"{{ humanSize(downloadRate, 'B/s') }}"
+
+		.list-item-body
 
 			.list-item-subtitle
 				span.icon
 					@icon icon
 				"{{ size === -1 ? '-' : humanSize(size, 'B') }}"
 
-		@if-right "downloads:change"
-			.list-item-actions
-				@if state !== "paused" && state !== "complete" && state !== "error"
-					a.action-with-icon[title=Pause][href={{ uri("#!downloads/pause/%s", _id) }}]
-						@icon "pause"
-						"Pause"
+			@if-right "downloads:change"
+				.list-item-actions
+					@if state !== "paused" && state !== "complete" && state !== "error"
+						a.action-with-icon[title=Pause][href={{ uri("#!downloads/pause/%s", _id) }}]
+							@icon "pause"
+							"Pause"
 
-				@if state === "error"
-					a.action-with-icon[title=Retry][href={{ uri("#!downloads/retry/%s", _id) }}]
-						@icon "reload"
-						"Retry"
+					@if state === "error"
+						a.action-with-icon[title=Retry][href={{ uri("#!downloads/retry/%s", _id) }}]
+							@icon "reload"
+							"Retry"
 
-				@if state === "paused"
-					a.action-with-icon[title=Resume][href={{ uri("#!downloads/resume/%s", _id) }}]
-						@icon "play"
-						"Resume"
+					@if state === "paused"
+						a.action-with-icon[title=Resume][href={{ uri("#!downloads/resume/%s", _id) }}]
+							@icon "play"
+							"Resume"
 
-				@if state === "complete"
-					a.action-with-icon[title=Download] \
-					  [href={{ uri("/download/downloads/%s", _id) }}]
-						@icon "share:download"
-						"Download"
+					@if state === "complete"
+						a.action-with-icon[title=Download] \
+						  [href={{ uri("/download/downloads/%s", _id) }}]
+							@icon "share:download"
+							"Download"
 
-				a.action-with-icon \
-				  [title={{ state === "complete" || state === "error" ? "Remove" : "Cancel" }}] \
-				  [href={{ uri("#!downloads/cancel/%s", _id) }}]
-					@icon "cancel"
-					"{{ state === 'complete' || state === 'error' ? 'Remove' : 'Cancel' }}"
+					a.action-with-icon \
+					  [title={{ state === "complete" || state === "error" ? "Remove" : "Cancel" }}] \
+					  [href={{ uri("#!downloads/cancel/%s", _id) }}]
+						@icon "cancel"
+						"{{ state === 'complete' || state === 'error' ? 'Remove' : 'Cancel' }}"
 
 
 .downloads.content-box
