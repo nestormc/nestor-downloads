@@ -45,9 +45,22 @@ define([
 	 */
 
 
+	function getDownloadsFetcher() {
+		var fetched = false;
+
+		return function() {
+			if (fetched) {
+				return when.resolve([]);
+			} else {
+				fetched = true;
+				return resources.downloads.list();
+			}
+		};
+	}
+
+
 	var contentListConfig = {
 		resource: resources.downloads,
-		fetcher: function() { return resources.downloads.list(); },
 		dataMapper: function(downloads) {
 			return { downloads: downloads };
 		},
@@ -101,6 +114,8 @@ define([
 		renderApplet(appletView);
 
 		var downloadsView = ui.view("downloads");
+
+		contentListConfig.fetcher = getDownloadsFetcher();
 		ui.helpers.setupContentList(downloadsView, contentListConfig);
 
 		var addView = ui.view("new-download");
