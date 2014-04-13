@@ -10,7 +10,7 @@
 			.upload
 				@if uploadRate > 0
 					span.icon.active
-						@icon "upload"
+						@icon "downloads:upload"
 					"{{ humanSize(uploadRate, 'B/s') }}"
 				@else
 					span.icon
@@ -19,7 +19,7 @@
 			.download
 				@if downloadRate > 0
 					span.icon.active
-						@icon "download"
+						@icon "downloads:download"
 					"{{ humanSize(downloadRate, 'B/s') }}"
 				@else
 					span.icon
