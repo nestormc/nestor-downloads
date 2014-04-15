@@ -59,10 +59,16 @@ define([
 	}
 
 
+	var showDetails = [];
 	var contentListConfig = {
 		resource: resources.downloads,
 		dataMapper: function(downloads) {
-			return { downloads: downloads };
+			return {
+				downloads: downloads.map(function(download) {
+					download.showDetails = showDetails.indexOf(download._id) !== -1;
+					return download;
+				})
+			};
 		},
 
 		root: {
@@ -98,6 +104,22 @@ define([
 			"!cancel/:id": function(view, err, req, next) {
 				resources.downloads.cancel(req.match.id);
 				next();
+			},
+
+			"!details/:id": function(view, err, req, next) {
+				var download = view.$(".download[data-id='" + req.match.id + "']");
+				var visible = download.classList.toggle("show-details");
+				var idx = showDetails.indexOf(req.match.id);
+
+				if (idx !== -1) {
+					showDetails.splice(idx, 1);
+				}
+
+				if (visible) {
+					showDetails.push(req.match.id);
+				}
+
+				next();
 			}
 		}
 	};
@@ -114,6 +136,7 @@ define([
 		renderApplet(appletView);
 
 		var downloadsView = ui.view("downloads");
+		var showDetails = [];
 
 		contentListConfig.fetcher = getDownloadsFetcher();
 		ui.helpers.setupContentList(downloadsView, contentListConfig);

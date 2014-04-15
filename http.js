@@ -361,7 +361,7 @@ httpProvider.init = function(mongoose, logger, config) {
 
 	HTTPDownloadSchema.virtual("files").get(function() {
 		var files = {};
-		files[this.path] = this.size;
+		files[path.relative(incoming, this.path)] = this.size;
 		return files;
 	});
 

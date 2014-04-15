@@ -1,5 +1,28 @@
-.download .progress {
-	flex-basis: 100%;
+.download {
+	.progress {
+		flex-basis: 100%;
+	}
+
+	.files {
+		display: none;
+		list-style-type: none;
+		color: @mlGray;
+		margin: @contentBoxMargin;
+
+		.file {
+			display: flex;
+			flex-flow: row;
+
+			.size {
+				margin-left: auto;
+				text-align: right;
+			}
+		}
+	}
+
+	&.show-details .files {
+		display: block;
+	}
 }
 
 .download[data-state="error"] .progress {

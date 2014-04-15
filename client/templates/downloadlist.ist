@@ -1,5 +1,8 @@
 @define "downloads-download"
-	li.list-item.download[data-id={{ _id }}][data-state={{ state }}]
+	li \
+	  [data-id={{ _id }}] \
+	  [data-state={{ state }}] \
+	  [class=list-item download{{ showDetails ? " show-details" : "" }}]
 		.list-item-head
 			@with size ? 100 * downloaded / size : 0
 				@use "progress-bar"
@@ -27,8 +30,19 @@
 					@icon icon
 				"{{ size === -1 ? '-' : humanSize(size, 'B') }}"
 
+			ul.list-item-details.files
+				@eachkey files
+					li.file
+						.name "{{ key }}"
+						.size "{{ humanSize(value, 'B') }}"
+
+
 			@if-right "downloads:change"
 				.list-item-actions
+					a.action-with-icon[href={{ uri("#!downloads/details/%s", _id) }}]
+						@icon "more"
+						"Details"
+
 					@if state !== "paused" && state !== "complete" && state !== "error"
 						a.action-with-icon[title=Pause][href={{ uri("#!downloads/pause/%s", _id) }}]
 							@icon "pause"
