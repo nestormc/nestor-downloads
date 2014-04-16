@@ -1,4 +1,6 @@
 .download {
+	border: 0 !important;
+
 	.progress {
 		flex-basis: 100%;
 	}
@@ -25,7 +27,7 @@
 	}
 }
 
-.download[data-state="error"] .progress {
+.download[data-state="error"] .progress .bar {
 	background-color: @error;
 }
 
